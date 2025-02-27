@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: multi-container-pod
+  labels:
+    app: multi-container
+spec:
+  volumes:
+  - name: container1-index-volume
+    configMap:
+      name: nginx-index-container1
+  - name: container2-index-volume
+    configMap:
+      name: nginx-index-container2
+  - name: mysql2-config-volume
+    configMap:
+      name: mysql2-config
+  containers:
+  - name: nginx-container1
+    image: nginx:latest
+    ports:
+    - containerPort: 8080
+    command: ["/bin/sh", "-c"]
+    args:
+      - sed -i 's/listen\s*80\s*;/listen 8080;/' /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'
+    volumeMounts:
+    - name: container1-index-volume
+      mountPath: /usr/share/nginx/html/container1
+  - name: mysql-container1
+    image: mysql:latest
+    env:
+    - name: MYSQL_ROOT_PASSWORD
+      value: "exemplo1"
+    ports:
+    - containerPort: 3306
+  - name: nginx-container2
+    image: nginx:latest
+    ports:
+    - containerPort: 8090
+    command: ["/bin/sh", "-c"]
+    args:
+      - sed -i 's/listen\s*80\s*;/listen 8090;/' /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'
+    volumeMounts:
+    - name: container2-index-volume
+      mountPath: /usr/share/nginx/html/container2
+  - name: mysql-container2
+    image: mysql:latest
+    env:
+    - name: MYSQL_ROOT_PASSWORD
+      value: "exemplo2"
+    ports:
+    - containerPort: 3307
+    volumeMounts:
+    - name: mysql2-config-volume
+      mountPath: /etc/mysql/conf.d/custom-mysql.cnf
+      subPath: custom-mysql.cnf
